@@ -1,0 +1,9 @@
+.idea/
+.idea_modules/
+.worksheet/
+
+target/
+/project/target/
+/project/project/target/
+
+.bsp/
