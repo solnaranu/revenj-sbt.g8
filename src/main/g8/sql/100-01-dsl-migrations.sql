@@ -1,8 +1,8 @@
 /*MIGRATION_DESCRIPTION
---CREATE: revenjsbt-Example
-New object Example will be created in schema revenjsbt
---CREATE: revenjsbt-Example-ID
-New property ID will be created for Example in revenjsbt
+--CREATE: $name$-Example
+New object Example will be created in schema $name$
+--CREATE: $name$-Example-ID
+New property ID will be created for Example in $name$
 MIGRATION_DESCRIPTION*/
 
 DO \$\$ BEGIN
@@ -151,9 +151,9 @@ DO \$X\$ BEGIN
 END \$X\$ LANGUAGE plpgsql;
 
 DO \$\$ BEGIN
-	IF NOT EXISTS(SELECT * FROM pg_namespace WHERE nspname = 'revenjsbt') THEN
-		CREATE SCHEMA "revenjsbt";
-		COMMENT ON SCHEMA "revenjsbt" IS 'NGS generated';
+	IF NOT EXISTS(SELECT * FROM pg_namespace WHERE nspname = '$name$') THEN
+		CREATE SCHEMA "$name$";
+		COMMENT ON SCHEMA "$name$" IS 'NGS generated';
 	END IF;
 END \$\$ LANGUAGE plpgsql;
 
@@ -559,82 +559,82 @@ DO \$\$ BEGIN
 END \$\$ LANGUAGE plpgsql;
 
 DO \$\$ BEGIN
-	IF NOT EXISTS(SELECT * FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname = 'revenjsbt' AND t.typname = '-ngs_Example_type-') THEN	
-		CREATE TYPE "revenjsbt"."-ngs_Example_type-" AS ();
-		COMMENT ON TYPE "revenjsbt"."-ngs_Example_type-" IS 'NGS generated';
+	IF NOT EXISTS(SELECT * FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname = '$name$' AND t.typname = '-ngs_Example_type-') THEN	
+		CREATE TYPE "$name$"."-ngs_Example_type-" AS ();
+		COMMENT ON TYPE "$name$"."-ngs_Example_type-" IS 'NGS generated';
 	END IF;
 END \$\$ LANGUAGE plpgsql;
 
 DO \$\$ BEGIN
-	IF NOT EXISTS(SELECT * FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'revenjsbt' AND c.relname = 'Example') THEN	
-		CREATE TABLE "revenjsbt"."Example" ();
-		COMMENT ON TABLE "revenjsbt"."Example" IS 'NGS generated';
+	IF NOT EXISTS(SELECT * FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = '$name$' AND c.relname = 'Example') THEN	
+		CREATE TABLE "$name$"."Example" ();
+		COMMENT ON TABLE "$name$"."Example" IS 'NGS generated';
 	END IF;
 END \$\$ LANGUAGE plpgsql;
 
 DO \$\$ BEGIN
-	IF NOT EXISTS(SELECT * FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'revenjsbt' AND c.relname = 'Example_sequence') THEN
-		CREATE SEQUENCE "revenjsbt"."Example_sequence";
-		COMMENT ON SEQUENCE "revenjsbt"."Example_sequence" IS 'NGS generated';
+	IF NOT EXISTS(SELECT * FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = '$name$' AND c.relname = 'Example_sequence') THEN
+		CREATE SEQUENCE "$name$"."Example_sequence";
+		COMMENT ON SEQUENCE "$name$"."Example_sequence" IS 'NGS generated';
 	END IF;
 END \$\$ LANGUAGE plpgsql;
 
 DO \$\$ BEGIN
-	IF NOT EXISTS(SELECT * FROM "-DSL-".Load_Type_Info() WHERE type_schema = 'revenjsbt' AND type_name = 'Example' AND column_name = 'ID') THEN
-		ALTER TABLE "revenjsbt"."Example" ADD COLUMN "ID" INT NOT NULL DEFAULT 0;
-		COMMENT ON COLUMN "revenjsbt"."Example"."ID" IS 'NGS generated';
+	IF NOT EXISTS(SELECT * FROM "-DSL-".Load_Type_Info() WHERE type_schema = '$name$' AND type_name = 'Example' AND column_name = 'ID') THEN
+		ALTER TABLE "$name$"."Example" ADD COLUMN "ID" INT NOT NULL DEFAULT 0;
+		COMMENT ON COLUMN "$name$"."Example"."ID" IS 'NGS generated';
 	END IF;
 END \$\$ LANGUAGE plpgsql;
 
 DO \$\$ BEGIN
-	IF NOT EXISTS(SELECT * FROM "-DSL-".Load_Type_Info() WHERE type_schema = 'revenjsbt' AND type_name = '-ngs_Example_type-' AND column_name = 'ID') THEN
-		ALTER TYPE "revenjsbt"."-ngs_Example_type-" ADD ATTRIBUTE "ID" INT;
-		COMMENT ON COLUMN "revenjsbt"."-ngs_Example_type-"."ID" IS 'NGS generated';
+	IF NOT EXISTS(SELECT * FROM "-DSL-".Load_Type_Info() WHERE type_schema = '$name$' AND type_name = '-ngs_Example_type-' AND column_name = 'ID') THEN
+		ALTER TYPE "$name$"."-ngs_Example_type-" ADD ATTRIBUTE "ID" INT;
+		COMMENT ON COLUMN "$name$"."-ngs_Example_type-"."ID" IS 'NGS generated';
 	END IF;
 END \$\$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE VIEW "revenjsbt"."Example_entity" AS
+CREATE OR REPLACE VIEW "$name$"."Example_entity" AS
 SELECT _entity."ID" AS "ID"
 FROM
-	"revenjsbt"."Example" _entity
+	"$name$"."Example" _entity
 	;
-COMMENT ON VIEW "revenjsbt"."Example_entity" IS 'NGS volatile';
+COMMENT ON VIEW "$name$"."Example_entity" IS 'NGS volatile';
 
-CREATE OR REPLACE FUNCTION "URI"("revenjsbt"."Example_entity") RETURNS TEXT AS \$\$
+CREATE OR REPLACE FUNCTION "URI"("$name$"."Example_entity") RETURNS TEXT AS \$\$
 SELECT CAST(\$1."ID" as TEXT)
 \$\$ LANGUAGE SQL IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION "revenjsbt"."cast_Example_to_type"("revenjsbt"."-ngs_Example_type-") RETURNS "revenjsbt"."Example_entity" AS \$\$ SELECT \$1::text::"revenjsbt"."Example_entity" \$\$ IMMUTABLE LANGUAGE sql;
-CREATE OR REPLACE FUNCTION "revenjsbt"."cast_Example_to_type"("revenjsbt"."Example_entity") RETURNS "revenjsbt"."-ngs_Example_type-" AS \$\$ SELECT \$1::text::"revenjsbt"."-ngs_Example_type-" \$\$ IMMUTABLE LANGUAGE sql;
+CREATE OR REPLACE FUNCTION "$name$"."cast_Example_to_type"("$name$"."-ngs_Example_type-") RETURNS "$name$"."Example_entity" AS \$\$ SELECT \$1::text::"$name$"."Example_entity" \$\$ IMMUTABLE LANGUAGE sql;
+CREATE OR REPLACE FUNCTION "$name$"."cast_Example_to_type"("$name$"."Example_entity") RETURNS "$name$"."-ngs_Example_type-" AS \$\$ SELECT \$1::text::"$name$"."-ngs_Example_type-" \$\$ IMMUTABLE LANGUAGE sql;
 
 DO \$\$ BEGIN
 	IF NOT EXISTS(SELECT * FROM pg_cast c JOIN pg_type s ON c.castsource = s.oid JOIN pg_type t ON c.casttarget = t.oid JOIN pg_namespace n ON n.oid = s.typnamespace AND n.oid = t.typnamespace
-					WHERE n.nspname = 'revenjsbt' AND s.typname = 'Example_entity' AND t.typname = '-ngs_Example_type-') THEN
-		CREATE CAST ("revenjsbt"."-ngs_Example_type-" AS "revenjsbt"."Example_entity") WITH FUNCTION "revenjsbt"."cast_Example_to_type"("revenjsbt"."-ngs_Example_type-") AS IMPLICIT;
-		CREATE CAST ("revenjsbt"."Example_entity" AS "revenjsbt"."-ngs_Example_type-") WITH FUNCTION "revenjsbt"."cast_Example_to_type"("revenjsbt"."Example_entity") AS IMPLICIT;
+					WHERE n.nspname = '$name$' AND s.typname = 'Example_entity' AND t.typname = '-ngs_Example_type-') THEN
+		CREATE CAST ("$name$"."-ngs_Example_type-" AS "$name$"."Example_entity") WITH FUNCTION "$name$"."cast_Example_to_type"("$name$"."-ngs_Example_type-") AS IMPLICIT;
+		CREATE CAST ("$name$"."Example_entity" AS "$name$"."-ngs_Example_type-") WITH FUNCTION "$name$"."cast_Example_to_type"("$name$"."Example_entity") AS IMPLICIT;
 	END IF;
 END \$\$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE VIEW "revenjsbt"."Example_unprocessed_events" AS
+CREATE OR REPLACE VIEW "$name$"."Example_unprocessed_events" AS
 SELECT _aggregate."ID"
 FROM
-	"revenjsbt"."Example_entity" _aggregate
+	"$name$"."Example_entity" _aggregate
 ;
-COMMENT ON VIEW "revenjsbt"."Example_unprocessed_events" IS 'NGS volatile';
+COMMENT ON VIEW "$name$"."Example_unprocessed_events" IS 'NGS volatile';
 
-CREATE OR REPLACE FUNCTION "revenjsbt"."insert_Example"(IN _inserted "revenjsbt"."Example_entity"[]) RETURNS VOID AS
+CREATE OR REPLACE FUNCTION "$name$"."insert_Example"(IN _inserted "$name$"."Example_entity"[]) RETURNS VOID AS
 \$\$
 BEGIN
 	
-	INSERT INTO "revenjsbt"."Example" ("ID") VALUES(_inserted[1]."ID");
+	INSERT INTO "$name$"."Example" ("ID") VALUES(_inserted[1]."ID");
 	
-	PERFORM pg_notify('aggregate_roots', 'revenjsbt.Example:Insert:' || array["URI"(_inserted[1])]::TEXT);
+	PERFORM pg_notify('aggregate_roots', '$name$.Example:Insert:' || array["URI"(_inserted[1])]::TEXT);
 END
 \$\$
 LANGUAGE plpgsql SECURITY DEFINER;;
 
-CREATE OR REPLACE FUNCTION "revenjsbt"."persist_Example"(
-IN _inserted "revenjsbt"."Example_entity"[], IN _updated_original "revenjsbt"."Example_entity"[], IN _updated_new "revenjsbt"."Example_entity"[], IN _deleted "revenjsbt"."Example_entity"[]) 
+CREATE OR REPLACE FUNCTION "$name$"."persist_Example"(
+IN _inserted "$name$"."Example_entity"[], IN _updated_original "$name$"."Example_entity"[], IN _updated_new "$name$"."Example_entity"[], IN _deleted "$name$"."Example_entity"[]) 
 	RETURNS VARCHAR AS
 \$\$
 DECLARE cnt int;
@@ -652,14 +652,14 @@ BEGIN
 
 	
 
-	INSERT INTO "revenjsbt"."Example" ("ID")
+	INSERT INTO "$name$"."Example" ("ID")
 	SELECT _i."ID" 
 	FROM unnest(_inserted) _i;
 
 	
 
 	IF _update_count > 0 THEN
-		UPDATE "revenjsbt"."Example" AS _tbl SET "ID" = (_u.changed)."ID"
+		UPDATE "$name$"."Example" AS _tbl SET "ID" = (_u.changed)."ID"
 		FROM (SELECT unnest(_updated_original) as original, unnest(_updated_new) as changed) _u
 		WHERE _tbl."ID" = (_u.original)."ID";
 
@@ -672,7 +672,7 @@ BEGIN
 	
 
 	IF _delete_count > 0 THEN
-		DELETE FROM "revenjsbt"."Example" AS _tbl
+		DELETE FROM "$name$"."Example" AS _tbl
 		WHERE (_tbl."ID") IN (SELECT _d."ID" FROM unnest(_deleted) _d);
 
 		GET DIAGNOSTICS cnt = ROW_COUNT;
@@ -682,10 +682,10 @@ BEGIN
 	END IF;
 
 	
-	PERFORM "-DSL-".Safe_Notify('aggregate_roots', 'revenjsbt.Example', 'Insert', (SELECT array_agg(_i."URI") FROM unnest(_inserted) _i));
-	PERFORM "-DSL-".Safe_Notify('aggregate_roots', 'revenjsbt.Example', 'Update', (SELECT array_agg(_u."URI") FROM unnest(_updated_original) _u));
-	PERFORM "-DSL-".Safe_Notify('aggregate_roots', 'revenjsbt.Example', 'Change', (SELECT array_agg((_u.changed)."URI") FROM (SELECT unnest(_updated_original) as original, unnest(_updated_new) as changed) _u WHERE (_u.changed)."ID" != (_u.original)."ID"));
-	PERFORM "-DSL-".Safe_Notify('aggregate_roots', 'revenjsbt.Example', 'Delete', (SELECT array_agg(_d."URI") FROM unnest(_deleted) _d));
+	PERFORM "-DSL-".Safe_Notify('aggregate_roots', '$name$.Example', 'Insert', (SELECT array_agg(_i."URI") FROM unnest(_inserted) _i));
+	PERFORM "-DSL-".Safe_Notify('aggregate_roots', '$name$.Example', 'Update', (SELECT array_agg(_u."URI") FROM unnest(_updated_original) _u));
+	PERFORM "-DSL-".Safe_Notify('aggregate_roots', '$name$.Example', 'Change', (SELECT array_agg((_u.changed)."URI") FROM (SELECT unnest(_updated_original) as original, unnest(_updated_new) as changed) _u WHERE (_u.changed)."ID" != (_u.original)."ID"));
+	PERFORM "-DSL-".Safe_Notify('aggregate_roots', '$name$.Example', 'Delete', (SELECT array_agg(_d."URI") FROM unnest(_deleted) _d));
 
 	SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -694,25 +694,25 @@ END
 \$\$
 LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION "revenjsbt"."update_Example"(IN _original "revenjsbt"."Example_entity"[], IN _updated "revenjsbt"."Example_entity"[]) RETURNS VARCHAR AS
+CREATE OR REPLACE FUNCTION "$name$"."update_Example"(IN _original "$name$"."Example_entity"[], IN _updated "$name$"."Example_entity"[]) RETURNS VARCHAR AS
 \$\$
 DECLARE cnt int;
 BEGIN
 	
-	UPDATE "revenjsbt"."Example" AS _tab SET "ID" = _updated[1]."ID" WHERE _tab."ID" = _original[1]."ID";
+	UPDATE "$name$"."Example" AS _tab SET "ID" = _updated[1]."ID" WHERE _tab."ID" = _original[1]."ID";
 	GET DIAGNOSTICS cnt = ROW_COUNT;
 	
-	PERFORM pg_notify('aggregate_roots', 'revenjsbt.Example:Update:' || array["URI"(_original[1])]::TEXT);
+	PERFORM pg_notify('aggregate_roots', '$name$.Example:Update:' || array["URI"(_original[1])]::TEXT);
 	IF (_original[1]."ID" != _updated[1]."ID") THEN
-		PERFORM pg_notify('aggregate_roots', 'revenjsbt.Example:Change:' || array["URI"(_updated[1])]::TEXT);
+		PERFORM pg_notify('aggregate_roots', '$name$.Example:Change:' || array["URI"(_updated[1])]::TEXT);
 	END IF;
 	RETURN CASE WHEN cnt = 0 THEN 'No rows updated' ELSE NULL END;
 END
 \$\$
 LANGUAGE plpgsql SECURITY DEFINER;;
 
-SELECT "-DSL-".Create_Type_Cast('"revenjsbt"."cast_Example_to_type"("revenjsbt"."-ngs_Example_type-")', 'revenjsbt', '-ngs_Example_type-', 'Example_entity');
-SELECT "-DSL-".Create_Type_Cast('"revenjsbt"."cast_Example_to_type"("revenjsbt"."Example_entity")', 'revenjsbt', 'Example_entity', '-ngs_Example_type-');
+SELECT "-DSL-".Create_Type_Cast('"$name$"."cast_Example_to_type"("$name$"."-ngs_Example_type-")', '$name$', '-ngs_Example_type-', 'Example_entity');
+SELECT "-DSL-".Create_Type_Cast('"$name$"."cast_Example_to_type"("$name$"."Example_entity")', '$name$', 'Example_entity', '-ngs_Example_type-');
 
 CREATE OR REPLACE FUNCTION "-DSL-".submit_commands(IN _commands JSONB[], IN _name VARCHAR, IN _at TIMESTAMPTZ = CURRENT_TIMESTAMP, OUT id VARCHAR) 
 	RETURNS SETOF VARCHAR AS
@@ -727,7 +727,7 @@ LANGUAGE SQL SECURITY DEFINER;
 DO \$\$ 
 DECLARE _pk VARCHAR;
 BEGIN
-	IF EXISTS(SELECT * FROM pg_index i JOIN pg_class c ON i.indrelid = c.oid JOIN pg_namespace n ON c.relnamespace = n.oid WHERE i.indisprimary AND n.nspname = 'revenjsbt' AND c.relname = 'Example') THEN
+	IF EXISTS(SELECT * FROM pg_index i JOIN pg_class c ON i.indrelid = c.oid JOIN pg_namespace n ON c.relnamespace = n.oid WHERE i.indisprimary AND n.nspname = '$name$' AND c.relname = 'Example') THEN
 		SELECT array_to_string(array_agg(sq.attname), ', ') INTO _pk
 		FROM
 		(
@@ -736,30 +736,30 @@ BEGIN
 			JOIN pg_class c ON i.indrelid = c.oid 
 			JOIN pg_attribute atr ON atr.attrelid = c.oid 
 			WHERE 
-				c.oid = '"revenjsbt"."Example"'::regclass
+				c.oid = '"$name$"."Example"'::regclass
 				AND atr.attnum = any(i.indkey)
 				AND indisprimary
 			ORDER BY (SELECT i FROM generate_subscripts(i.indkey,1) g(i) WHERE i.indkey[i] = atr.attnum LIMIT 1)
 		) sq;
 		IF ('ID' != _pk) THEN
-			RAISE EXCEPTION 'Different primary key defined for table revenjsbt.Example. Expected primary key: ID. Found: %', _pk;
+			RAISE EXCEPTION 'Different primary key defined for table $name$.Example. Expected primary key: ID. Found: %', _pk;
 		END IF;
 	ELSE
-		ALTER TABLE "revenjsbt"."Example" ADD CONSTRAINT "pk_Example" PRIMARY KEY("ID");
-		COMMENT ON CONSTRAINT "pk_Example" ON "revenjsbt"."Example" IS 'NGS generated';
+		ALTER TABLE "$name$"."Example" ADD CONSTRAINT "pk_Example" PRIMARY KEY("ID");
+		COMMENT ON CONSTRAINT "pk_Example" ON "$name$"."Example" IS 'NGS generated';
 	END IF;
 END \$\$ LANGUAGE plpgsql;
 
 DO \$\$ 
 BEGIN
-	IF NOT EXISTS(SELECT * FROM pg_class c JOIN pg_namespace n ON c.relnamespace = n.oid WHERE n.nspname = 'revenjsbt' AND c.relname = 'Example_ID_seq' AND c.relkind = 'S') THEN
-		CREATE SEQUENCE "revenjsbt"."Example_ID_seq";
-		ALTER TABLE "revenjsbt"."Example"	ALTER COLUMN "ID" SET DEFAULT NEXTVAL('"revenjsbt"."Example_ID_seq"');
-		PERFORM SETVAL('"revenjsbt"."Example_ID_seq"', COALESCE(MAX("ID"), 0) + 1000) FROM "revenjsbt"."Example";
+	IF NOT EXISTS(SELECT * FROM pg_class c JOIN pg_namespace n ON c.relnamespace = n.oid WHERE n.nspname = '$name$' AND c.relname = 'Example_ID_seq' AND c.relkind = 'S') THEN
+		CREATE SEQUENCE "$name$"."Example_ID_seq";
+		ALTER TABLE "$name$"."Example"	ALTER COLUMN "ID" SET DEFAULT NEXTVAL('"$name$"."Example_ID_seq"');
+		PERFORM SETVAL('"$name$"."Example_ID_seq"', COALESCE(MAX("ID"), 0) + 1000) FROM "$name$"."Example";
 	END IF;
 END \$\$ LANGUAGE plpgsql;
 
-SELECT "-DSL-".Persist_Concepts('"dsl/revenjsbt.dsl"=>"module revenjsbt {
+SELECT "-DSL-".Persist_Concepts('"dsl/$name$.dsl"=>"module $name$ {
 
   aggregate Example;
   
