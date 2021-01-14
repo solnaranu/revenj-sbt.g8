@@ -5,21 +5,21 @@ New object Example will be created in schema revenjsbt
 New property ID will be created for Example in revenjsbt
 MIGRATION_DESCRIPTION*/
 
-DO $$ BEGIN
+DO \$\$ BEGIN
 	IF EXISTS(SELECT * FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = '-DSL-' AND c.relname = 'database_setting') THEN	
 		IF EXISTS(SELECT * FROM "-DSL-".Database_Setting WHERE Key ILIKE 'mode' AND NOT Value ILIKE 'unsafe') THEN
 			RAISE EXCEPTION 'Database upgrade is forbidden. Change database mode to allow upgrade';
 		END IF;
 	END IF;
-END $$ LANGUAGE plpgsql;
+END \$\$ LANGUAGE plpgsql;
 
-DO $X$ BEGIN
+DO \$X\$ BEGIN
 	IF EXISTS(SELECT * FROM pg_namespace n JOIN pg_description d ON d.objoid = n.oid WHERE n.nspname = '-NGS-' AND d.description LIKE 'NGS generated%') THEN
 		ALTER SCHEMA "-NGS-" RENAME TO "-DSL-";
 
 		CREATE OR REPLACE FUNCTION "-DSL-".Create_Type_Cast(function VARCHAR, schema VARCHAR, from_name VARCHAR, to_name VARCHAR)
 		RETURNS void AS
-		$MIG$
+		\$MIG\$
 		DECLARE header VARCHAR;
 		DECLARE source VARCHAR;
 		DECLARE footer VARCHAR;
@@ -29,10 +29,10 @@ DO $X$ BEGIN
 			header = 'CREATE OR REPLACE FUNCTION ' || function || '
 		RETURNS ' || type || '
 		AS
-		$BODY$
+		\$BODY\$
 		SELECT ROW(';
 			footer = ')::' || type || '
-		$BODY$ IMMUTABLE LANGUAGE sql;';
+		\$BODY\$ IMMUTABLE LANGUAGE sql;';
 			source = '';
 			FOR col_name IN 
 				SELECT 
@@ -53,7 +53,7 @@ DO $X$ BEGIN
 				IF col_name IS NULL THEN
 					source = source || 'null, ';
 				ELSE
-					source = source || '$1."' || col_name || '", ';
+					source = source || '\$1."' || col_name || '", ';
 				END IF;
 			END LOOP;
 			IF (LENGTH(source) > 0) THEN 
@@ -61,26 +61,26 @@ DO $X$ BEGIN
 			END IF;
 			EXECUTE (header || source || footer);
 		END
-		$MIG$ LANGUAGE plpgsql;
+		\$MIG\$ LANGUAGE plpgsql;
 
 		CREATE OR REPLACE FUNCTION "-DSL-".Load_Last_Migration()
 		RETURNS "-DSL-".Database_Migration AS
-		$$
+		\$\$
 		SELECT m FROM "-DSL-".Database_Migration m
 		ORDER BY Ordinal DESC 
 		LIMIT 1
-		$$ LANGUAGE sql SECURITY DEFINER STABLE;
+		\$\$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 		CREATE OR REPLACE FUNCTION "-DSL-".Persist_Concepts(dsls TEXT, implementations BYTEA, version VARCHAR)
 		  RETURNS void AS
-		$$
+		\$\$
 		BEGIN
 			INSERT INTO "-DSL-".Database_Migration(Dsls, Implementations, Version) VALUES(dsls, implementations, version);
 		END;
-		$$ LANGUAGE plpgsql SECURITY DEFINER;
+		\$\$ LANGUAGE plpgsql SECURITY DEFINER;
 
 		CREATE OR REPLACE FUNCTION "-DSL-".Safe_Notify(target varchar, name varchar, operation varchar, uris varchar[]) RETURNS VOID AS
-		$$
+		\$\$
 		DECLARE message VARCHAR;
 		DECLARE array_size INT;
 		BEGIN
@@ -95,15 +95,15 @@ DO $X$ BEGIN
 				RAISE EXCEPTION 'uri can''t be longer than 8000 characters';
 			END IF;	
 		END
-		$$ LANGUAGE PLPGSQL SECURITY DEFINER;
+		\$\$ LANGUAGE PLPGSQL SECURITY DEFINER;
 	END IF;
-END $X$ LANGUAGE plpgsql;
+END \$X\$ LANGUAGE plpgsql;
 
-DO $X$ BEGIN
+DO \$X\$ BEGIN
 	IF EXISTS(SELECT * FROM pg_namespace n JOIN pg_description d ON d.objoid = n.oid WHERE n.nspname = '-DSL-')
 		AND NOT EXISTS(select * from pg_proc p join pg_namespace n on p.pronamespace = n.oid where n.nspname = '-DSL-' AND p.proname = 'add_enum_label') THEN
 		CREATE OR REPLACE FUNCTION "-DSL-".Add_Enum_Label(ns varchar, tn varchar, lbl varchar) RETURNS VOID AS
-		$$ 
+		\$\$ 
 		BEGIN
 			IF NOT EXISTS(SELECT * FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname = ns AND t.typname = tn AND e.enumlabel = lbl) THEN
 				IF NOT EXISTS(SELECT * FROM pg_catalog.pg_user WHERE usename = CURRENT_USER AND usesuper) THEN
@@ -117,12 +117,12 @@ DO $X$ BEGIN
 				WHERE n.nspname = ns AND t.typname = tn;
 			END IF;
 		END
-		$$ SECURITY DEFINER LANGUAGE PLPGSQL;
+		\$\$ SECURITY DEFINER LANGUAGE PLPGSQL;
 	END IF;
 	IF EXISTS(SELECT * FROM pg_namespace n JOIN pg_description d ON d.objoid = n.oid WHERE n.nspname = '-DSL-')
 		AND NOT EXISTS(select * from pg_proc p join pg_namespace n on p.pronamespace = n.oid where n.nspname = '-DSL-' AND p.proname = 'rename_enum_label') THEN
 		CREATE OR REPLACE FUNCTION "-DSL-".Rename_Enum_Label(ns varchar, tn varchar, oldLbl varchar, newLbl varchar, ticks bigint) RETURNS VOID AS
-		$$ 
+		\$\$ 
 		BEGIN
 			IF NOT EXISTS(SELECT * FROM pg_catalog.pg_user WHERE usename = CURRENT_USER AND usesuper) THEN
 				RAISE EXCEPTION 'Unable to rename enum label. Function -DSL-.rename_enum_label is not created with superuser powers.';
@@ -146,18 +146,18 @@ DO $X$ BEGIN
 				WHERE n.nspname = ns AND t.typname = tn
 			);
 		END
-		$$ SECURITY DEFINER LANGUAGE PLPGSQL;
+		\$\$ SECURITY DEFINER LANGUAGE PLPGSQL;
 	END IF;
-END $X$ LANGUAGE plpgsql;
+END \$X\$ LANGUAGE plpgsql;
 
-DO $$ BEGIN
+DO \$\$ BEGIN
 	IF NOT EXISTS(SELECT * FROM pg_namespace WHERE nspname = 'revenjsbt') THEN
 		CREATE SCHEMA "revenjsbt";
 		COMMENT ON SCHEMA "revenjsbt" IS 'NGS generated';
 	END IF;
-END $$ LANGUAGE plpgsql;
+END \$\$ LANGUAGE plpgsql;
 
-DO $x$ BEGIN
+DO \$x\$ BEGIN
 	IF EXISTS(SELECT * FROM pg_namespace n JOIN pg_description d ON d.objoid = n.oid WHERE n.nspname = '-DSL-') THEN
 		CREATE OR REPLACE FUNCTION "-DSL-".Load_Type_Info(
 			OUT type_schema character varying, 
@@ -169,7 +169,7 @@ DO $x$ BEGIN
 			OUT is_not_null boolean,
 			OUT is_ngs_generated boolean)
 		  RETURNS SETOF record AS
-		$BODY$
+		\$BODY\$
 		SELECT 
 			ns.nspname::varchar, 
 			cl.relname::varchar, 
@@ -200,15 +200,15 @@ DO $x$ BEGIN
 			AND atr.attnum > 0
 			AND atr.attisdropped = FALSE
 		ORDER BY 1, 2, 6
-		$BODY$
+		\$BODY\$
 		  LANGUAGE SQL STABLE;
 	END IF;
-END $x$ LANGUAGE plpgsql;
+END \$x\$ LANGUAGE plpgsql;
 
-DO $x$ BEGIN
+DO \$x\$ BEGIN
 	IF EXISTS(SELECT * FROM pg_namespace n JOIN pg_description d ON d.objoid = n.oid WHERE n.nspname = '-DSL-') THEN
 		CREATE OR REPLACE FUNCTION "-DSL-".Add_List_Partitions(_schema TEXT, _table TEXT, _values TEXT[]) RETURNS VOID AS
-		$body$
+		\$body\$
 		DECLARE n TEXT;
 		BEGIN
 					FOR n IN SELECT 'CREATE TABLE IF NOT EXISTS ' || quote_ident(_schema) || '.' || quote_ident(_table || ':' || v) 
@@ -223,11 +223,11 @@ DO $x$ BEGIN
 						EXECUTE n;
 					END LOOP;
 		END;
-		$body$ LANGUAGE plpgsql;
+		\$body\$ LANGUAGE plpgsql;
 	END IF;
-END $x$ LANGUAGE plpgsql;
+END \$x\$ LANGUAGE plpgsql;
 
-DO $$
+DO \$\$
 DECLARE script VARCHAR;
 BEGIN
 	IF NOT EXISTS(SELECT * FROM pg_namespace WHERE nspname = '-DSL-') THEN
@@ -247,7 +247,7 @@ BEGIN
 	IF length(script) > 0 THEN
 		EXECUTE script;
 	END IF;
-END $$ LANGUAGE plpgsql;
+END \$\$ LANGUAGE plpgsql;
 
 CREATE TABLE IF NOT EXISTS "-DSL-".Database_Migration
 (
@@ -260,22 +260,22 @@ CREATE TABLE IF NOT EXISTS "-DSL-".Database_Migration
 
 CREATE OR REPLACE FUNCTION "-DSL-".Load_Last_Migration()
 RETURNS "-DSL-".Database_Migration AS
-$$
+\$\$
 SELECT m FROM "-DSL-".Database_Migration m
 ORDER BY Ordinal DESC 
 LIMIT 1
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
+\$\$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 CREATE OR REPLACE FUNCTION "-DSL-".Persist_Concepts(dsls TEXT, implementations BYTEA, version VARCHAR)
   RETURNS void AS
-$$
+\$\$
 BEGIN
 	INSERT INTO "-DSL-".Database_Migration(Dsls, Implementations, Version) VALUES(dsls, implementations, version);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+\$\$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION "-DSL-".Split_Uri(s text) RETURNS TEXT[] AS
-$$
+\$\$
 DECLARE i int;
 DECLARE pos int;
 DECLARE len int;
@@ -306,13 +306,13 @@ BEGIN
 	res[i] = cur;
 	return res;
 END
-$$ LANGUAGE plpgsql SECURITY DEFINER IMMUTABLE;
+\$\$ LANGUAGE plpgsql SECURITY DEFINER IMMUTABLE;
 
-DO $X$ BEGIN
+DO \$X\$ BEGIN
 	IF NOT EXISTS(select * from pg_aggregate where aggfnoid::TEXT = '"-DSL-".array_combine') THEN
 		CREATE AGGREGATE "-DSL-".array_combine(anyarray)(SFUNC = array_cat, STYPE = anyarray, INITCOND = '{}');
 	END IF;
-END $X$ LANGUAGE plpgsql;
+END \$X\$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION "-DSL-".Load_Type_Info(
 	OUT type_schema character varying, 
@@ -324,7 +324,7 @@ CREATE OR REPLACE FUNCTION "-DSL-".Load_Type_Info(
 	OUT is_not_null boolean,
 	OUT is_ngs_generated boolean)
   RETURNS SETOF record AS
-$BODY$
+\$BODY\$
 SELECT 
 	ns.nspname::varchar, 
 	cl.relname::varchar, 
@@ -355,11 +355,11 @@ WHERE
 	AND atr.attnum > 0
 	AND atr.attisdropped = FALSE
 ORDER BY 1, 2, 6
-$BODY$
+\$BODY\$
   LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION "-DSL-".Add_List_Partitions(_schema TEXT, _table TEXT, _values TEXT[]) RETURNS VOID AS
-$BODY$
+\$BODY\$
 DECLARE n TEXT;
 BEGIN
 			FOR n IN SELECT 'CREATE TABLE IF NOT EXISTS ' || quote_ident(_schema) || '.' || quote_ident(_table || ':' || v) 
@@ -374,13 +374,13 @@ BEGIN
 				EXECUTE n;
 			END LOOP;
 END;
-$BODY$ LANGUAGE plpgsql;
+\$BODY\$ LANGUAGE plpgsql;
 
-DO $X$ BEGIN
+DO \$X\$ BEGIN
 	IF EXISTS(SELECT * FROM pg_namespace n JOIN pg_description d ON d.objoid = n.oid WHERE n.nspname = '-DSL-')
 		AND NOT EXISTS(select * from pg_proc p join pg_namespace n on p.pronamespace = n.oid where n.nspname = '-DSL-' AND p.proname = 'add_enum_label') THEN
 		CREATE OR REPLACE FUNCTION "-DSL-".Add_Enum_Label(ns varchar, tn varchar, lbl varchar) RETURNS VOID AS
-		$$ 
+		\$\$ 
 		BEGIN
 			IF NOT EXISTS(SELECT * FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname = ns AND t.typname = tn AND e.enumlabel = lbl) THEN
 				IF NOT EXISTS(SELECT * FROM pg_catalog.pg_user WHERE usename = CURRENT_USER AND usesuper) THEN
@@ -394,15 +394,15 @@ DO $X$ BEGIN
 				WHERE n.nspname = ns AND t.typname = tn;
 			END IF;
 		END
-		$$ SECURITY DEFINER LANGUAGE PLPGSQL;
+		\$\$ SECURITY DEFINER LANGUAGE PLPGSQL;
 	END IF;
-END $X$ LANGUAGE plpgsql;
+END \$X\$ LANGUAGE plpgsql;
 
-DO $X$ BEGIN
+DO \$X\$ BEGIN
 	IF EXISTS(SELECT * FROM pg_namespace n JOIN pg_description d ON d.objoid = n.oid WHERE n.nspname = '-DSL-')
 		AND NOT EXISTS(select * from pg_proc p join pg_namespace n on p.pronamespace = n.oid where n.nspname = '-DSL-' AND p.proname = 'rename_enum_Label') THEN
 		CREATE OR REPLACE FUNCTION "-DSL-".Rename_Enum_Label(ns varchar, tn varchar, oldLbl varchar, newLbl varchar, ticks bigint) RETURNS VOID AS
-		$$ 
+		\$\$ 
 		BEGIN
 			IF NOT EXISTS(SELECT * FROM pg_catalog.pg_user WHERE usename = CURRENT_USER AND usesuper) THEN
 				RAISE EXCEPTION 'Unable to rename enum label. Function -DSL-.rename_enum_label is not created with superuser powers.';
@@ -426,12 +426,12 @@ DO $X$ BEGIN
 				WHERE n.nspname = ns AND t.typname = tn
 			);
 		END
-		$$ SECURITY DEFINER LANGUAGE PLPGSQL;
+		\$\$ SECURITY DEFINER LANGUAGE PLPGSQL;
 	END IF;
-END $X$ LANGUAGE plpgsql;
+END \$X\$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION "-DSL-".Safe_Notify(target varchar, name varchar, operation varchar, uris varchar[]) RETURNS VOID AS
-$$
+\$\$
 DECLARE message VARCHAR;
 DECLARE array_size INT;
 BEGIN
@@ -446,14 +446,14 @@ BEGIN
 		RAISE EXCEPTION 'uri can''t be longer than 8000 characters';
 	END IF;	
 END
-$$ LANGUAGE PLPGSQL SECURITY DEFINER;
+\$\$ LANGUAGE PLPGSQL SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION "-DSL-".cast_int(int[]) RETURNS TEXT AS
-$$ SELECT $1::TEXT[]::TEXT $$ LANGUAGE SQL IMMUTABLE COST 1;
+\$\$ SELECT \$1::TEXT[]::TEXT \$\$ LANGUAGE SQL IMMUTABLE COST 1;
 CREATE OR REPLACE FUNCTION "-DSL-".cast_bigint(bigint[]) RETURNS TEXT AS
-$$ SELECT $1::TEXT[]::TEXT $$ LANGUAGE SQL IMMUTABLE COST 1;
+\$\$ SELECT \$1::TEXT[]::TEXT \$\$ LANGUAGE SQL IMMUTABLE COST 1;
 
-DO $$ BEGIN
+DO \$\$ BEGIN
 	-- unfortunately only superuser can create such casts
 	IF EXISTS(SELECT * FROM pg_catalog.pg_user WHERE usename = CURRENT_USER AND usesuper) THEN
 		IF NOT EXISTS (SELECT * FROM pg_catalog.pg_cast c JOIN pg_type s ON c.castsource = s.oid JOIN pg_type t ON c.casttarget = t.oid WHERE s.typname = '_int4' AND t.typname = 'text') THEN
@@ -463,42 +463,42 @@ DO $$ BEGIN
 			CREATE CAST (bigint[] AS text) WITH FUNCTION "-DSL-".cast_bigint(bigint[]) AS ASSIGNMENT;
 		END IF;
 	END IF;
-END $$ LANGUAGE plpgsql;
+END \$\$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION "-DSL-".Generate_Uri2(text, text) RETURNS text AS 
-$$
+\$\$
 BEGIN
-	RETURN replace(replace($1, '\','\\'), '/', '\/')||'/'||replace(replace($2, '\','\\'), '/', '\/');
+	RETURN replace(replace(\$1, '\','\\'), '/', '\/')||'/'||replace(replace(\$2, '\','\\'), '/', '\/');
 END;
-$$ LANGUAGE PLPGSQL IMMUTABLE;
+\$\$ LANGUAGE PLPGSQL IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION "-DSL-".Generate_Uri3(text, text, text) RETURNS text AS 
-$$
+\$\$
 BEGIN
-	RETURN replace(replace($1, '\','\\'), '/', '\/')||'/'||replace(replace($2, '\','\\'), '/', '\/')||'/'||replace(replace($3, '\','\\'), '/', '\/');
+	RETURN replace(replace(\$1, '\','\\'), '/', '\/')||'/'||replace(replace(\$2, '\','\\'), '/', '\/')||'/'||replace(replace(\$3, '\','\\'), '/', '\/');
 END;
-$$ LANGUAGE PLPGSQL IMMUTABLE;
+\$\$ LANGUAGE PLPGSQL IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION "-DSL-".Generate_Uri4(text, text, text, text) RETURNS text AS 
-$$
+\$\$
 BEGIN
-	RETURN replace(replace($1, '\','\\'), '/', '\/')||'/'||replace(replace($2, '\','\\'), '/', '\/')||'/'||replace(replace($3, '\','\\'), '/', '\/')||'/'||replace(replace($4, '\','\\'), '/', '\/');
+	RETURN replace(replace(\$1, '\','\\'), '/', '\/')||'/'||replace(replace(\$2, '\','\\'), '/', '\/')||'/'||replace(replace(\$3, '\','\\'), '/', '\/')||'/'||replace(replace(\$4, '\','\\'), '/', '\/');
 END;
-$$ LANGUAGE PLPGSQL IMMUTABLE;
+\$\$ LANGUAGE PLPGSQL IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION "-DSL-".Generate_Uri5(text, text, text, text, text) RETURNS text AS 
-$$
+\$\$
 BEGIN
-	RETURN replace(replace($1, '\','\\'), '/', '\/')||'/'||replace(replace($2, '\','\\'), '/', '\/')||'/'||replace(replace($3, '\','\\'), '/', '\/')||'/'||replace(replace($4, '\','\\'), '/', '\/')||'/'||replace(replace($5, '\','\\'), '/', '\/');
+	RETURN replace(replace(\$1, '\','\\'), '/', '\/')||'/'||replace(replace(\$2, '\','\\'), '/', '\/')||'/'||replace(replace(\$3, '\','\\'), '/', '\/')||'/'||replace(replace(\$4, '\','\\'), '/', '\/')||'/'||replace(replace(\$5, '\','\\'), '/', '\/');
 END;
-$$ LANGUAGE PLPGSQL IMMUTABLE;
+\$\$ LANGUAGE PLPGSQL IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION "-DSL-".Generate_Uri(text[]) RETURNS text AS 
-$$
+\$\$
 BEGIN
-	RETURN (SELECT array_to_string(array_agg(replace(replace(u, '\','\\'), '/', '\/')), '/') FROM unnest($1) u);
+	RETURN (SELECT array_to_string(array_agg(replace(replace(u, '\','\\'), '/', '\/')), '/') FROM unnest(\$1) u);
 END;
-$$ LANGUAGE PLPGSQL IMMUTABLE;
+\$\$ LANGUAGE PLPGSQL IMMUTABLE;
 
 CREATE TABLE IF NOT EXISTS "-DSL-".Database_Setting
 (
@@ -508,7 +508,7 @@ CREATE TABLE IF NOT EXISTS "-DSL-".Database_Setting
 
 CREATE OR REPLACE FUNCTION "-DSL-".Create_Type_Cast(function VARCHAR, schema VARCHAR, from_name VARCHAR, to_name VARCHAR)
 RETURNS void AS
-$$
+\$\$
 DECLARE header VARCHAR;
 DECLARE source VARCHAR;
 DECLARE footer VARCHAR;
@@ -518,10 +518,10 @@ BEGIN
 	header = 'CREATE OR REPLACE FUNCTION ' || function || '
 RETURNS ' || type || '
 AS
-$BODY$
+\$BODY\$
 SELECT ROW(';
 	footer = ')::' || type || '
-$BODY$ IMMUTABLE LANGUAGE sql;';
+\$BODY\$ IMMUTABLE LANGUAGE sql;';
 	source = '';
 	FOR col_name IN 
 		SELECT 
@@ -542,7 +542,7 @@ $BODY$ IMMUTABLE LANGUAGE sql;';
 		IF col_name IS NULL THEN
 			source = source || 'null, ';
 		ELSE
-			source = source || '$1."' || col_name || '", ';
+			source = source || '\$1."' || col_name || '", ';
 		END IF;
 	END LOOP;
 	IF (LENGTH(source) > 0) THEN 
@@ -550,48 +550,48 @@ $BODY$ IMMUTABLE LANGUAGE sql;';
 	END IF;
 	EXECUTE (header || source || footer);
 END
-$$ LANGUAGE plpgsql;
+\$\$ LANGUAGE plpgsql;
 
-DO $$ BEGIN
+DO \$\$ BEGIN
 	IF NOT EXISTS(SELECT * FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = '-DSL-' AND c.relname = 'command_log') THEN	
 		CREATE TABLE "-DSL-".command_log (id SERIAL PRIMARY KEY, name VARCHAR NOT NULL, at TIMESTAMPTZ NOT NULL DEFAULT NOW(), command JSONB NOT NULL);
 	END IF;
-END $$ LANGUAGE plpgsql;
+END \$\$ LANGUAGE plpgsql;
 
-DO $$ BEGIN
+DO \$\$ BEGIN
 	IF NOT EXISTS(SELECT * FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname = 'revenjsbt' AND t.typname = '-ngs_Example_type-') THEN	
 		CREATE TYPE "revenjsbt"."-ngs_Example_type-" AS ();
 		COMMENT ON TYPE "revenjsbt"."-ngs_Example_type-" IS 'NGS generated';
 	END IF;
-END $$ LANGUAGE plpgsql;
+END \$\$ LANGUAGE plpgsql;
 
-DO $$ BEGIN
+DO \$\$ BEGIN
 	IF NOT EXISTS(SELECT * FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'revenjsbt' AND c.relname = 'Example') THEN	
 		CREATE TABLE "revenjsbt"."Example" ();
 		COMMENT ON TABLE "revenjsbt"."Example" IS 'NGS generated';
 	END IF;
-END $$ LANGUAGE plpgsql;
+END \$\$ LANGUAGE plpgsql;
 
-DO $$ BEGIN
+DO \$\$ BEGIN
 	IF NOT EXISTS(SELECT * FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'revenjsbt' AND c.relname = 'Example_sequence') THEN
 		CREATE SEQUENCE "revenjsbt"."Example_sequence";
 		COMMENT ON SEQUENCE "revenjsbt"."Example_sequence" IS 'NGS generated';
 	END IF;
-END $$ LANGUAGE plpgsql;
+END \$\$ LANGUAGE plpgsql;
 
-DO $$ BEGIN
+DO \$\$ BEGIN
 	IF NOT EXISTS(SELECT * FROM "-DSL-".Load_Type_Info() WHERE type_schema = 'revenjsbt' AND type_name = 'Example' AND column_name = 'ID') THEN
 		ALTER TABLE "revenjsbt"."Example" ADD COLUMN "ID" INT NOT NULL DEFAULT 0;
 		COMMENT ON COLUMN "revenjsbt"."Example"."ID" IS 'NGS generated';
 	END IF;
-END $$ LANGUAGE plpgsql;
+END \$\$ LANGUAGE plpgsql;
 
-DO $$ BEGIN
+DO \$\$ BEGIN
 	IF NOT EXISTS(SELECT * FROM "-DSL-".Load_Type_Info() WHERE type_schema = 'revenjsbt' AND type_name = '-ngs_Example_type-' AND column_name = 'ID') THEN
 		ALTER TYPE "revenjsbt"."-ngs_Example_type-" ADD ATTRIBUTE "ID" INT;
 		COMMENT ON COLUMN "revenjsbt"."-ngs_Example_type-"."ID" IS 'NGS generated';
 	END IF;
-END $$ LANGUAGE plpgsql;
+END \$\$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE VIEW "revenjsbt"."Example_entity" AS
 SELECT _entity."ID" AS "ID"
@@ -600,20 +600,20 @@ FROM
 	;
 COMMENT ON VIEW "revenjsbt"."Example_entity" IS 'NGS volatile';
 
-CREATE OR REPLACE FUNCTION "URI"("revenjsbt"."Example_entity") RETURNS TEXT AS $$
-SELECT CAST($1."ID" as TEXT)
-$$ LANGUAGE SQL IMMUTABLE;
+CREATE OR REPLACE FUNCTION "URI"("revenjsbt"."Example_entity") RETURNS TEXT AS \$\$
+SELECT CAST(\$1."ID" as TEXT)
+\$\$ LANGUAGE SQL IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION "revenjsbt"."cast_Example_to_type"("revenjsbt"."-ngs_Example_type-") RETURNS "revenjsbt"."Example_entity" AS $$ SELECT $1::text::"revenjsbt"."Example_entity" $$ IMMUTABLE LANGUAGE sql;
-CREATE OR REPLACE FUNCTION "revenjsbt"."cast_Example_to_type"("revenjsbt"."Example_entity") RETURNS "revenjsbt"."-ngs_Example_type-" AS $$ SELECT $1::text::"revenjsbt"."-ngs_Example_type-" $$ IMMUTABLE LANGUAGE sql;
+CREATE OR REPLACE FUNCTION "revenjsbt"."cast_Example_to_type"("revenjsbt"."-ngs_Example_type-") RETURNS "revenjsbt"."Example_entity" AS \$\$ SELECT \$1::text::"revenjsbt"."Example_entity" \$\$ IMMUTABLE LANGUAGE sql;
+CREATE OR REPLACE FUNCTION "revenjsbt"."cast_Example_to_type"("revenjsbt"."Example_entity") RETURNS "revenjsbt"."-ngs_Example_type-" AS \$\$ SELECT \$1::text::"revenjsbt"."-ngs_Example_type-" \$\$ IMMUTABLE LANGUAGE sql;
 
-DO $$ BEGIN
+DO \$\$ BEGIN
 	IF NOT EXISTS(SELECT * FROM pg_cast c JOIN pg_type s ON c.castsource = s.oid JOIN pg_type t ON c.casttarget = t.oid JOIN pg_namespace n ON n.oid = s.typnamespace AND n.oid = t.typnamespace
 					WHERE n.nspname = 'revenjsbt' AND s.typname = 'Example_entity' AND t.typname = '-ngs_Example_type-') THEN
 		CREATE CAST ("revenjsbt"."-ngs_Example_type-" AS "revenjsbt"."Example_entity") WITH FUNCTION "revenjsbt"."cast_Example_to_type"("revenjsbt"."-ngs_Example_type-") AS IMPLICIT;
 		CREATE CAST ("revenjsbt"."Example_entity" AS "revenjsbt"."-ngs_Example_type-") WITH FUNCTION "revenjsbt"."cast_Example_to_type"("revenjsbt"."Example_entity") AS IMPLICIT;
 	END IF;
-END $$ LANGUAGE plpgsql;
+END \$\$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE VIEW "revenjsbt"."Example_unprocessed_events" AS
 SELECT _aggregate."ID"
@@ -623,20 +623,20 @@ FROM
 COMMENT ON VIEW "revenjsbt"."Example_unprocessed_events" IS 'NGS volatile';
 
 CREATE OR REPLACE FUNCTION "revenjsbt"."insert_Example"(IN _inserted "revenjsbt"."Example_entity"[]) RETURNS VOID AS
-$$
+\$\$
 BEGIN
 	
 	INSERT INTO "revenjsbt"."Example" ("ID") VALUES(_inserted[1]."ID");
 	
 	PERFORM pg_notify('aggregate_roots', 'revenjsbt.Example:Insert:' || array["URI"(_inserted[1])]::TEXT);
 END
-$$
+\$\$
 LANGUAGE plpgsql SECURITY DEFINER;;
 
 CREATE OR REPLACE FUNCTION "revenjsbt"."persist_Example"(
 IN _inserted "revenjsbt"."Example_entity"[], IN _updated_original "revenjsbt"."Example_entity"[], IN _updated_new "revenjsbt"."Example_entity"[], IN _deleted "revenjsbt"."Example_entity"[]) 
 	RETURNS VARCHAR AS
-$$
+\$\$
 DECLARE cnt int;
 DECLARE uri VARCHAR;
 DECLARE tmp record;
@@ -691,11 +691,11 @@ BEGIN
 
 	RETURN NULL;
 END
-$$
+\$\$
 LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION "revenjsbt"."update_Example"(IN _original "revenjsbt"."Example_entity"[], IN _updated "revenjsbt"."Example_entity"[]) RETURNS VARCHAR AS
-$$
+\$\$
 DECLARE cnt int;
 BEGIN
 	
@@ -708,7 +708,7 @@ BEGIN
 	END IF;
 	RETURN CASE WHEN cnt = 0 THEN 'No rows updated' ELSE NULL END;
 END
-$$
+\$\$
 LANGUAGE plpgsql SECURITY DEFINER;;
 
 SELECT "-DSL-".Create_Type_Cast('"revenjsbt"."cast_Example_to_type"("revenjsbt"."-ngs_Example_type-")', 'revenjsbt', '-ngs_Example_type-', 'Example_entity');
@@ -716,15 +716,15 @@ SELECT "-DSL-".Create_Type_Cast('"revenjsbt"."cast_Example_to_type"("revenjsbt".
 
 CREATE OR REPLACE FUNCTION "-DSL-".submit_commands(IN _commands JSONB[], IN _name VARCHAR, IN _at TIMESTAMPTZ = CURRENT_TIMESTAMP, OUT id VARCHAR) 
 	RETURNS SETOF VARCHAR AS
-$$
+\$\$
 		INSERT INTO "-DSL-".command_log (name, at, command)
 		SELECT _name, _at, c
 		FROM unnest(_commands) c
 		RETURNING id::text
-$$
+\$\$
 LANGUAGE SQL SECURITY DEFINER;
 
-DO $$ 
+DO \$\$ 
 DECLARE _pk VARCHAR;
 BEGIN
 	IF EXISTS(SELECT * FROM pg_index i JOIN pg_class c ON i.indrelid = c.oid JOIN pg_namespace n ON c.relnamespace = n.oid WHERE i.indisprimary AND n.nspname = 'revenjsbt' AND c.relname = 'Example') THEN
@@ -748,16 +748,16 @@ BEGIN
 		ALTER TABLE "revenjsbt"."Example" ADD CONSTRAINT "pk_Example" PRIMARY KEY("ID");
 		COMMENT ON CONSTRAINT "pk_Example" ON "revenjsbt"."Example" IS 'NGS generated';
 	END IF;
-END $$ LANGUAGE plpgsql;
+END \$\$ LANGUAGE plpgsql;
 
-DO $$ 
+DO \$\$ 
 BEGIN
 	IF NOT EXISTS(SELECT * FROM pg_class c JOIN pg_namespace n ON c.relnamespace = n.oid WHERE n.nspname = 'revenjsbt' AND c.relname = 'Example_ID_seq' AND c.relkind = 'S') THEN
 		CREATE SEQUENCE "revenjsbt"."Example_ID_seq";
 		ALTER TABLE "revenjsbt"."Example"	ALTER COLUMN "ID" SET DEFAULT NEXTVAL('"revenjsbt"."Example_ID_seq"');
 		PERFORM SETVAL('"revenjsbt"."Example_ID_seq"', COALESCE(MAX("ID"), 0) + 1000) FROM "revenjsbt"."Example";
 	END IF;
-END $$ LANGUAGE plpgsql;
+END \$\$ LANGUAGE plpgsql;
 
 SELECT "-DSL-".Persist_Concepts('"dsl/revenjsbt.dsl"=>"module revenjsbt {
 
